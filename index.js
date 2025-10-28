@@ -52,7 +52,7 @@ app.get("/api/orders_related/:query", (req, res) => {
     };
   } else if (query === "order_status") {
     response = {
-      message: "Your order #OD1234 will be delivered in 3 mins.",
+      message: "Balu is on the way to delivery your order #OD1234.It  will be delivered in 3 mins. In mean if you have any issue you connect with the delivery agent",
       options: [
         {
           id: "connect_delivery_partner",
@@ -739,7 +739,7 @@ app.post("/api/order_delayed", (req, res) => {
           "We’ve notified our support team about your delayed order. You’ll get an update shortly.",
         options: [
           { name: "🏠 Back to main menu", id: "main_menu" },
-          { name: "📞 Contact support", id: "contact_support" },
+          { name: "📞 Contact  support", id: "cont act_support" },
         ],
       });
     }
