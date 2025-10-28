@@ -52,7 +52,7 @@ app.get("/api/orders_related/:query", (req, res) => {
     };
   } else if (query === "order_status") {
     response = {
-      message: "Balu is on the way to delivery your order #OD1234.It  will be delivered in 3 mins. In mean if you have any issue you connect with the delivery agent",
+      message: "Balu is on the way to delivery your order #OD1234.It  will be delivered in 3 mins. In mean time if you have any issue you connect with the delivery agent",
       options: [
         {
           id: "connect_delivery_partner",
