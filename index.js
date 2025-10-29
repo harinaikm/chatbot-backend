@@ -52,7 +52,8 @@ app.get("/api/orders_related/:query", (req, res) => {
     };
   } else if (query === "order_status") {
     response = {
-      message: "Balu is on the way to delivery your order #OD1234.It  will be delivered in 3 mins. In mean time if you have any issue you connect with the delivery agent",
+      message:
+        "Balu is on the way to delivery your order #OD1234.It  will be delivered in 3 mins. In mean time if you have any issue you connect with the delivery agent",
       options: [
         {
           id: "connect_delivery_partner",
@@ -462,8 +463,14 @@ app.post("/api/cancel_order", (req, res) => {
       message: "Please tell us why you’d like to cancel your order.",
       options: [
         {
+          id: "reason_better_price",
+          name: "Found a better price elsewhere",
+          category: "cancel_order",
+          next_step: "choose_cancel_type",
+        },
+        {
           id: "reason_wrong_item",
-          name: "Do you find any better vendor",
+          name: "Added wrong items by mistake",
           category: "cancel_order",
           next_step: "choose_cancel_type",
         },
@@ -671,6 +678,7 @@ app.post("/api/cancel_order", (req, res) => {
 app.post("/api/modifying_order", (req, res) => {
   const { current_step, orderId, selectedItem, newAddedItem, quantity } =
     req.body;
+  console.log("modifying_order", current_step);
 
   const orders = [
     {
@@ -725,8 +733,9 @@ app.post("/api/modifying_order", (req, res) => {
     const { items } = orders.filter((order) => order.id === orderId)[0];
 
     const options = items.map((item, index) => ({
-      id: `increase_quantity`,
+      id: item,
       name: item,
+      input: true,
       category: "modifying_order",
       next_step: "increase-quantity_of_existing_item_confirmation",
     }));
@@ -867,6 +876,178 @@ app.post("/api/reschedule_order", (req, res) => {
 });
 
 app.post("/api/order_delayed", (req, res) => {
+  const { current_step, orderId, userChoice } = req.body;
+
+  const orders = [
+    {
+      id: "OD1234",
+      status: "Out for Delivery", // other statuses: Packed, Preparing, Delivered
+      eta: "25 mins",
+      delay_reason: "Heavy traffic in your area",
+      delivery_partner: "Ramesh",
+    },
+    {
+      id: "OD1235",
+      status: "Preparing",
+      eta: "15 mins",
+      delay_reason: "High demand surge at your nearby store",
+      delivery_partner: null,
+    },
+  ];
+
+  const order = orders.find((o) => o.id === orderId);
+
+  if (!order) {
+    return res.status(404).json({
+      message:
+        "We couldn’t find your order details. Please check your order ID or try again later.",
+    });
+  }
+
+  // 1️⃣ Initial Step — Detect Order Delay
+  if (current_step === "check_order_delay") {
+    if (order.status === "Delivered") {
+      return res.status(200).json({
+        message:
+          "Your order has already been delivered. Was there any issue with it?",
+        options: [
+          {
+            id: "issue_with_order",
+            name: "Yes, I have an issue",
+            next_step: "issue_with_products",
+            category: "order_delayed",
+          },
+          { id: "no_thanks", name: "No, all good", next_step: "end" },
+        ],
+      });
+    }
+
+    return res.status(200).json({
+      message: `Your order #${order.id} is currently *${order.status}*.  
+Expected delivery in approximately ${order.eta}.`,
+      note: `Reason for delay: ${order.delay_reason}.`,
+      options: [
+        {
+          id: "track_live",
+          name: "Track live delivery status",
+          next_step: "track_live_status",
+          category: "order_delayed",
+        },
+        {
+          id: "contact_support",
+          name: "Talk to support agent",
+          next_step: "connect_support",
+          category: "order_delayed",
+        },
+        {
+          id: "cancel_order",
+          name: "Cancel my order",
+          next_step: "confirm_cancel_due_to_delay",
+          category: "order_delayed",
+        },
+      ],
+    });
+  }
+
+  // 2️⃣ Step — Live Tracking Info
+  else if (current_step === "track_live_status") {
+    if (order.status === "Out for Delivery") {
+      return res.status(200).json({
+        message: `Your order is with ${order.delivery_partner} and will reach you soon 🚴‍♂️.  
+There’s a slight delay due to ${order.delay_reason}. ETA: ${order.eta}`,
+        options: [
+          {
+            id: "wait_more",
+            name: "Okay, I’ll wait",
+            next_step: "thank_you_for_patience",
+            category: "order_delayed",
+          },
+          {
+            id: "cancel_order",
+            name: "Cancel my order",
+            next_step: "confirm_cancel_due_to_delay",
+            category: "order_delayed",
+          },
+        ],
+      });
+    } else {
+      return res.status(200).json({
+        message: `Your order is still being prepared at the store.  
+We’re expecting it to be dispatched soon.`,
+        note: `Reason for delay: ${order.delay_reason}`,
+        options: [
+          {
+            id: "wait_more",
+            name: "Okay, I’ll wait",
+            next_step: "thank_you_for_patience",
+            category: "order_delayed",
+          },
+          {
+            id: "cancel_order",
+            name: "Cancel my order",
+            next_step: "confirm_cancel_due_to_delay",
+            category: "order_delayed",
+          },
+        ],
+      });
+    }
+  }
+
+  // 3️⃣ Step — Customer Chooses to Cancel Due to Delay
+  else if (current_step === "confirm_cancel_due_to_delay") {
+    return res.status(200).json({
+      message:
+        "Are you sure you want to cancel your order due to delay? Once cancelled, we’ll refund your amount instantly to your original payment method.",
+      options: [
+        {
+          id: "yes_cancel",
+          name: "Yes, cancel my order",
+          next_step: "cancel_confirmed",
+          category: "order_delayed",
+        },
+        {
+          id: "no_continue",
+          name: "No, I’ll wait",
+          next_step: "thank_you_for_patience",
+          category: "order_delayed",
+        },
+      ],
+    });
+  }
+
+  // 4️⃣ Step — Cancel Confirmed
+  else if (current_step === "cancel_confirmed") {
+    return res.status(200).json({
+      message: `✅ Your order #${order.id} has been cancelled successfully. Your refund will be credited within 2–3 hours.`,
+    });
+  }
+
+  // 5️⃣ Step — Thank You (User Decides to Wait)
+  else if (current_step === "thank_you_for_patience") {
+    return res.status(200).json({
+      message:
+        "Thanks for your patience 🙏. Your order is on its way — we’ll notify you as soon as it’s about to reach your location.",
+    });
+  }
+
+  // 6️⃣ Step — Connect to Support
+  else if (current_step === "connect_support") {
+    return res.status(200).json({
+      message:
+        "Connecting you to a support specialist… Please wait a moment. 👩‍💻",
+      note: "Our team will assist you with real-time order updates.",
+    });
+  }
+
+  // Default fallback
+  else {
+    return res.status(400).json({
+      message: "Invalid step or missing parameters.",
+    });
+  }
+});
+
+app.post("/api/order_delayed", (req, res) => {
   const { current_step, orderId, user_choice } = req.body;
 
   // Mock orders
@@ -996,7 +1177,7 @@ app.post("/api/order_delayed", (req, res) => {
           "We’ve notified our support team about your delayed order. You’ll get an update shortly.",
         options: [
           { name: "🏠 Back to main menu", id: "main_menu" },
-          { name: "📞 Contact  support", id: "cont act_support" },
+          { name: "📞 Contact  support", id: "contact_support" },
         ],
       });
     }
@@ -1037,7 +1218,7 @@ app.get("/api/issue_with_products", (req, res) => {
 });
 
 app.post("/api/damaged_item", (req, res) => {
-  const { current_step, orderId } = req.body;
+  const { current_step, orderId, selected_item } = req.body;
   console.log(orderId);
   const orders = [
     { id: "OD1234", items: ["Milk", "Bread"], status: "Pending" },
@@ -1061,7 +1242,7 @@ app.post("/api/damaged_item", (req, res) => {
       id: `#${item}${index}`,
       name: item,
       category: "damaged_item",
-      next_step: "show_reasons",
+      next_step: "upload_photo",
     }));
 
     res.status(200).json({
@@ -1094,11 +1275,11 @@ app.post("/api/damaged_item", (req, res) => {
     });
   } else if (current_step === "upload_photo") {
     res.status(200).json({
-      message: "Please upload a photo of the damaged product.",
+      message: `Please upload a photo of the ${selected_item}.`,
       options: [
         {
           id: "upload_image",
-          name: "Upload Image",
+          name: "Upload photo",
           category: "damaged_item",
           next_step: "choose_resolution",
         },
