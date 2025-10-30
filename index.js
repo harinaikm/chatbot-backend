@@ -102,16 +102,28 @@ app.get("/api/issue_placing_order/:query", (req, res) => {
     response = {
       message:
         "Store is undergoing necessary maintance at the moment. Our team is working on it and we will notify you once we are available for delivery again. We apologise for the inconvenience.",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     };
   } else if (query === "area_out_of_service") {
     response = {
       message:
         "The store in your locality is not available for delivery right now. Please try placing an order later.",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     };
   } else if (query === "product_not_available") {
     response = {
       message:
         "Please type out the brand and name of the product(s), and we will try our best to make it available on Zippy.",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     };
   }
   res.status(200).json(response);
@@ -220,51 +232,6 @@ app.get("/api/return_replacement", (req, res) => {
     ],
   });
 });
-
-// app.get("/api/return_replacement/:query", (req, res) => {
-//   const { query } = req.params;
-//   let message;
-
-//   if (query === "late_delivery") {
-//     message =
-//       "We’re sorry for the delay! You can track your live ETA in ‘My Orders’.";
-//   } else if (query === "wrong_item") {
-//     message =
-//       "Please report the issue from your order details screen. Our team will arrange a refund or replacement.";
-//   } else if (query === "damaged_item") {
-//     message =
-//       "Upload a photo of the damaged item in the app → Help section. Refund will be processed after review.";
-//   }
-
-//   res.status(200).json({ message });
-// });
-
-// app.get("/api/return_replacement/damaged_item", (req, res) => {
-//   const current_step = 1;
-
-//   let response;
-
-//   switch (current_step) {
-//     case 1:
-//       response = [
-//         { orderId: "OD1234", items: ["Milk", "Bread"] },
-//         {
-//           orderId: "OD1235",
-//           items: ["Eggs"],
-//           id: "damaged_item",
-//           // category: "return_replacement",
-//         },
-//       ];
-//       break;
-
-//     default:
-//       break;
-//   }
-//   res.json({
-//     message:
-//       "Upload a photo of the damaged item in the app → Help section. Refund will be processed after review.",
-//   });
-// });
 
 app.get("/api/orders/active", (req, res) => {
   res.status(200).json([
@@ -420,12 +387,20 @@ app.get("/api/returned_orders/:query", (req, res) => {
     return res.status(200).json({
       message:
         "Your return request for Order OD1234 has been successfully cancelled. Thank you for shopping with us!",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
   if (query === "no_cancel") {
     return res.status(200).json({
       message: "No problem! Your return request remains active.",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
@@ -433,6 +408,10 @@ app.get("/api/returned_orders/:query", (req, res) => {
     return res.status(200).json({
       message:
         "Your refund will be credited to your original payment method (UPI - Axis Bank ****1234).",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
@@ -444,7 +423,13 @@ app.get("/api/returned_orders/:query", (req, res) => {
     });
   }
 
-  return res.status(404).json({ message: "Invalid query" });
+  return res.status(404).json({
+    message: "Invalid query",
+    options: [
+      { id: "end_conversation", name: "Okay, got it" },
+      { id: "main_menu", name: "Go back to main menu" },
+    ],
+  });
 });
 
 app.post("/api/cancel_order", (req, res) => {
@@ -496,17 +481,18 @@ app.post("/api/cancel_order", (req, res) => {
     });
   } else if (current_step === "choose_cancel_type") {
     res.status(200).json({
-      message: "Would you like to cancel the whole order or specific items?",
+      message:
+        "Would you like to cancel the entire order or just specific items?",
       options: [
         {
           id: "cancel_whole_order",
-          name: "Cancel whole order",
+          name: "🛑 Cancel the entire order",
           next_step: "show_confirmation",
           category: "cancel_order",
         },
         {
           id: "cancel_specific_item",
-          name: "Cancel specific item",
+          name: "🧾 Cancel only specific items",
           next_step: "show_items",
           category: "cancel_order",
         },
@@ -524,8 +510,11 @@ app.post("/api/cancel_order", (req, res) => {
 
     res.status(200).json({
       message:
-        "Got it! 😊 Please select the item(s) you’d like to cancel from your order.",
+        "Got it! Please select the item(s) you’d like to cancel from your order.",
       options,
+      multi_select: true,
+      category: "cancel_order",
+      next_step: "show_confirmation",
     });
   } else if (current_step === "show_confirmation") {
     return res.status(200).json({
@@ -539,7 +528,7 @@ app.post("/api/cancel_order", (req, res) => {
           category: "cancel_order",
         },
         {
-          id: "keep_order",
+          id: "end_conversation",
           name: "❌ No, I want to keep my order",
           category: "cancel_order",
         },
@@ -557,7 +546,7 @@ app.post("/api/cancel_order", (req, res) => {
         },
         {
           id: "refund_bank",
-          name: "Credit to Bank Account",
+          name: "Credit to Original Payment Method",
           next_step: "order_cancel_confirmation",
           category: "cancel_order",
         },
@@ -567,113 +556,22 @@ app.post("/api/cancel_order", (req, res) => {
     refundMessage =
       refund_mode === "refund_wallet"
         ? "Your refund will be credited to your wallet within 1–2 hours. 💰"
-        : "Your refund will be credited to your bank account within 1–2 business days. 🏦";
+        : "Your refund will be credited to your original payment method in 1 - 2 business days. 🏦";
     return res.status(200).json({
       message: `✅ Your order has been successfully cancelled. ${refundMessage}.`,
+      options: [
+        {
+          id: "end_conversation",
+          name: "Okay, got it",
+        },
+        {
+          id: "main_menu",
+          name: "Go back to main menu",
+        },
+      ],
     });
   }
 });
-
-// app.post("/api/cancel_order", (req, res) => {
-//   const { current_step, orderId } = req.body;
-//   console.log("cancel_order", current_step);
-
-//   const orders = [
-//     {
-//       id: "OD1234",
-//       items: ["Biscuit Pack", "Soft Drink", "Banana Chips"],
-//       status: "Pending",
-//     },
-//     { id: "OD1235", items: ["Eggs"], status: "Pending" },
-//   ];
-
-//   if (current_step === "show_active_orders") {
-//     res.status(200).json({
-//       message: "please select the option",
-//       options: [
-//         {
-//           id: "cancel_whole_order",
-//           name: "Cancel Whole Order",
-//           next_step: "show_confirmation",
-//           category: "cancel_order",
-//         },
-//         {
-//           id: "cancel_specific_item",
-//           name: "Cancel Specific Item",
-//           next_step: "show_items",
-//           category: "cancel_order",
-//         },
-//       ],
-//     });
-//   } else if (current_step === "show_items") {
-//     const { items } = orders.filter((order) => order.id === orderId)[0];
-
-//     const options = items.map((item, index) => ({
-//       id: `#${item}${index}`,
-//       name: item,
-//       category: "cancel_order",
-//       next_step: "show_confirmation",
-//     }));
-
-//     res.status(200).json({
-//       message: "Please choose items you want to cancel",
-//       options,
-//     });
-//   } else if (current_step === "show_confirmation") {
-//     res.status(200).json({
-//       message: `Are you sure you want to cancel?`,
-//       options: [
-//         {
-//           id: "yes",
-//           name: "Yes",
-//           category: "cancel_order",
-//           next_step: "show_reasons",
-//         },
-//         {
-//           id: "no",
-//           name: "No",
-//           category: "cancel_order",
-//           next_step: "end_of_conversation",
-//         },
-//       ],
-//     });
-//   } else if (current_step === "show_reasons") {
-//     res.status(200).json({
-//       message: "Please tell us why you’d like to cancel your order.",
-//       options: [
-//         {
-//           id: "reason_wrong_item",
-//           name: "Do you find any better vendor",
-//           category: "cancel_order",
-//           next_step: "order_cancel_confirmation",
-//         },
-//         {
-//           id: "reason_delayed",
-//           name: "Delivery taking too long",
-//           category: "cancel_order",
-//           next_step: "order_cancel_confirmation",
-//         },
-//         {
-//           id: "reason_changed_mind",
-//           name: "Changed my mind",
-//           category: "cancel_order",
-//           next_step: "order_cancel_confirmation",
-//         },
-//         {
-//           id: "other_reasons",
-//           name: "Other reasons",
-//           category: "cancel_order",
-//           next_step: "order_cancel_confirmation",
-//         },
-//       ],
-//     });
-//   } else if (current_step === "order_cancel_confirmation") {
-//     res.status(200).json({
-//       message:
-//         "✅ Your order has been successfully cancelled. The refund will be processed within 1-2 hours.",
-//     });
-//   }
-// });
 
 app.post("/api/modifying_order", (req, res) => {
   const { current_step, orderId, selectedItem, newAddedItem, quantity } =
@@ -695,31 +593,31 @@ app.post("/api/modifying_order", (req, res) => {
       options: [
         {
           id: "add_items",
-          name: "Add Items",
+          name: "🛒 Add Items",
           next_step: "add_items",
           category: "modifying_order",
         },
         {
           id: "delete_items",
-          name: "Delete Items",
-          category: "cancel_order",
+          name: "🗑️ Remove Items",
+          category: "modifying_order",
           next_step: "show_items",
         },
       ],
     });
   } else if (current_step === "add_items") {
     return res.status(200).json({
-      message: "please choose option",
+      message: "Sure! How would you like to add items to your order?",
       options: [
         {
           id: "add_new_item",
-          name: "Add new Item",
+          name: "➕ Add a new item",
           next_step: "add_new_item_confirmation",
           category: "modifying_order",
         },
         {
           id: "modify_in_existing_item",
-          name: "Increase Quantity of existing item",
+          name: "📦 Increase quantity of existing item",
           category: "modifying_order",
           next_step: "increase_quantity_of_existing_item",
         },
@@ -727,7 +625,17 @@ app.post("/api/modifying_order", (req, res) => {
     });
   } else if (current_step === "add_new_item_confirmation") {
     return res.status(200).json({
-      message: `${newAddedItem} is added to your current order`,
+      message: `✅ ${newAddedItem} has been successfully added to your order.`,
+      options: [
+        {
+          id: "end_conversation",
+          name: "Okay, got it",
+        },
+        {
+          id: "main_menu",
+          name: "Go back to main menu",
+        },
+      ],
     });
   } else if (current_step === "increase_quantity_of_existing_item") {
     const { items } = orders.filter((order) => order.id === orderId)[0];
@@ -740,14 +648,76 @@ app.post("/api/modifying_order", (req, res) => {
       next_step: "increase-quantity_of_existing_item_confirmation",
     }));
     res.status(200).json({
-      message: "Please choose item you want to increase quantity of:",
+      message: "Please select the item you want to increase the quantity of:",
       options,
     });
   } else if (
     current_step === "increase-quantity_of_existing_item_confirmation"
   ) {
     res.status(200).json({
-      message: `${selectedItem} of quantity ${quantity} is added to your current order`,
+      message: `✅ Quantity of "${selectedItem}" has been updated to ${quantity}.`,
+      options: [
+        {
+          id: "end_conversation",
+          name: "Okay, got it",
+        },
+        {
+          id: "main_menu",
+          name: "Go back to main menu",
+        },
+      ],
+    });
+  } else if (current_step === "show_items") {
+    const { items } = orders.filter((order) => order.id === orderId)[0];
+
+    const options = items.map((item, index) => ({
+      id: `#${item}${index}`,
+      name: item,
+      category: "modifying_order",
+      next_step: "show_confirmation",
+    }));
+
+    res.status(200).json({
+      message:
+        "Please select the item(s) you want to remove from your order 👇",
+      options,
+      multi_select: true,
+      category: "modifying_order",
+      next_step: "show_confirmation",
+    });
+  } else if (current_step === "show_confirmation") {
+    return res.status(200).json({
+      message:
+        "Just confirming — do you want to remove the selected items from your order?",
+      options: [
+        {
+          id: "confirm_delete",
+          name: "✅ Yes, remove them",
+          next_step: "delete_confirmation_done",
+          category: "modifying_order",
+        },
+        {
+          id: "end_conversation",
+          name: "❌ No, keep all items",
+          category: "modifying_order",
+        },
+      ],
+    });
+  }
+
+  if (current_step === "delete_confirmation_done") {
+    return res.status(200).json({
+      message: `✅ The selected item(s) have been successfully removed from your order.`,
+      options: [
+        {
+          id: "end_conversation",
+          name: "Okay, got it",
+        },
+        {
+          id: "main_menu",
+          name: "Go back to main menu",
+        },
+      ],
     });
   }
 });
@@ -865,6 +835,16 @@ app.post("/api/reschedule_order", (req, res) => {
     // Simulate successful reschedule
     return res.json({
       message: `✅ Your delivery for Order ID ${orderId} has been successfully rescheduled to "${selected_slot}".\n\nYou’ll receive a notification when your order is out for delivery.`,
+      options: [
+        {
+          id: "end_conversation",
+          name: "Okay, got it",
+        },
+        {
+          id: "main_menu",
+          name: "Go back to main menu",
+        },
+      ],
     });
   }
 
@@ -1019,6 +999,16 @@ We’re expecting it to be dispatched soon.`,
   else if (current_step === "cancel_confirmed") {
     return res.status(200).json({
       message: `✅ Your order #${order.id} has been cancelled successfully. Your refund will be credited within 2–3 hours.`,
+      options: [
+        {
+          id: "end_conversation",
+          name: "Okay, got it",
+        },
+        {
+          id: "main_menu",
+          name: "Go back to main menu",
+        },
+      ],
     });
   }
 
@@ -1321,6 +1311,10 @@ app.post("/api/damaged_item", (req, res) => {
     return res.status(200).json({
       message:
         "Refund request submitted. Our team will review and process it shortly. You’ll be notified once approved.",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
@@ -1345,10 +1339,18 @@ app.post("/api/damaged_item", (req, res) => {
     return res.status(200).json({
       message:
         "Replacement request submitted. The item will be dispatched soon",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   } else {
     res.status(200).json({
       message: "Refund request submitted. You’ll be notified within 24 hours.",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 });
@@ -1463,6 +1465,10 @@ app.post("/api/wrong_item", (req, res) => {
     return res.status(200).json({
       message:
         "Refund request submitted. Our team will review and process it shortly. You’ll be notified once approved.",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
@@ -1487,6 +1493,10 @@ app.post("/api/wrong_item", (req, res) => {
     return res.status(200).json({
       message:
         "Replacement request submitted. The correct item will be dispatched soon. Please keep the wrong item ready for pickup.",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
@@ -1494,6 +1504,10 @@ app.post("/api/wrong_item", (req, res) => {
   else {
     return res.status(400).json({
       message: "Invalid step or missing current_step parameter.",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 });
@@ -1624,6 +1638,10 @@ app.post("/api/missing_item", (req, res) => {
       message: `✅ Your report for missing item has been submitted successfully.\nOur team will process ${
         resolution_choice === "refund" ? "the refund" : "a replacement"
       } within 24 hours.`,
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
@@ -1631,6 +1649,10 @@ app.post("/api/missing_item", (req, res) => {
     return res.status(200).json({
       message:
         "No problem! The issue has not been reported. You can report it later if needed.",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
@@ -1638,6 +1660,10 @@ app.post("/api/missing_item", (req, res) => {
   return res.status(400).json({
     message: "Invalid step. Please restart the missing item flow.",
     next_step: "show_delivered_orders",
+    options: [
+      { id: "end_conversation", name: "Okay, got it" },
+      { id: "main_menu", name: "Go back to main menu" },
+    ],
   });
 });
 
@@ -1790,6 +1816,10 @@ app.post("/api/issue_with_quantity", (req, res) => {
 
     return res.status(200).json({
       message: `✅ Your report for quantity issue has been submitted successfully.\n${resolutionMessage}`,
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
@@ -1797,13 +1827,21 @@ app.post("/api/issue_with_quantity", (req, res) => {
     return res.status(200).json({
       message:
         "No problem! The issue has not been reported. You can report it later if needed.",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
   // Default fallback
   return res.status(400).json({
     message: "Invalid step. Please restart the quantity issue flow.",
-    next_step: "show_delivered_orders",
+    // next_step: "show_delivered_orders",
+    options: [
+      { id: "end_conversation", name: "Okay, got it" },
+      { id: "main_menu", name: "Go back to main menu" },
+    ],
   });
 });
 
@@ -1948,6 +1986,10 @@ app.post("/api/issue_with_delivery_partner", (req, res) => {
   if (current_step === "confirm_report") {
     return res.status(200).json({
       message: `✅ Your issue has been successfully reported to our support team. We’ll review the case and take appropriate action against the delivery partner.\n\nThank you for helping us improve your experience.`,
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
@@ -1955,22 +1997,30 @@ app.post("/api/issue_with_delivery_partner", (req, res) => {
     return res.status(200).json({
       message:
         "No problem! The issue has not been reported. If you face this problem again, please let us know.",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
   // Default fallback
   return res.status(400).json({
     message: "Invalid step. Please restart the delivery partner issue process.",
-    next_step: "show_delivered_orders",
+    // next_step: "show_delivered_orders",
+    options: [
+      { id: "end_conversation", name: "Okay, got it" },
+      { id: "main_menu", name: "Go back to main menu" },
+    ],
   });
 });
 
-app.get("/api/issue_with_delivery_partner", (req, res) => {
-  return res.status(200).json({
-    message: "What issue did you face with delivery partner?",
-    options: [{ id: "delivery_boy_behaviour", name: "Delivey boy behaviour " }],
-  });
-});
+// app.get("/api/issue_with_delivery_partner", (req, res) => {
+//   return res.status(200).json({
+//     message: "What issue did you face with delivery partner?",
+//     options: [{ id: "delivery_boy_behaviour", name: "Delivey boy behaviour " }],
+//   });
+// });
 
 //order returend
 
@@ -2063,6 +2113,10 @@ app.post("/api/reschedule_pickup", (req, res) => {
   if (current_step === "confirm_reschedule") {
     return res.status(200).json({
       message: `Your pickup for Order ${orderId} has been successfully rescheduled to ${selectedSlot}. Our partner will reach you at that time.`,
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
@@ -2070,11 +2124,21 @@ app.post("/api/reschedule_pickup", (req, res) => {
   if (current_step === "cancel_reschedule") {
     return res.status(200).json({
       message: "No problem! Your existing pickup schedule remains unchanged.",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
   // 🟥 Invalid step
-  return res.status(400).json({ message: "Invalid current_step" });
+  return res.status(400).json({
+    message: "Invalid current_step",
+    options: [
+      { id: "end_conversation", name: "Okay, got it" },
+      { id: "main_menu", name: "Go back to main menu" },
+    ],
+  });
 });
 
 app.post("/api/replacement_queries", (req, res) => {
@@ -2220,11 +2284,19 @@ app.post("/api/replacement_queries", (req, res) => {
       return res.status(200).json({
         message:
           "Got it! We’ll notify you via SMS or email once there’s an update.",
+        options: [
+          { id: "end_conversation", name: "Okay, got it" },
+          { id: "main_menu", name: "Go back to main menu" },
+        ],
       });
     } else {
       return res.status(200).json({
         message:
           "Alright! You can always check your replacement or refund status from the 'My Orders' section.",
+        options: [
+          { id: "end_conversation", name: "Okay, got it" },
+          { id: "main_menu", name: "Go back to main menu" },
+        ],
       });
     }
   }
@@ -2266,6 +2338,10 @@ app.post("/api/replacement_queries", (req, res) => {
   if (current_step === "reschedule_pickup_slot") {
     return res.status(200).json({
       message: `Pickup has been successfully rescheduled to ${selectedSlot}.`,
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
@@ -2274,6 +2350,10 @@ app.post("/api/replacement_queries", (req, res) => {
     return res.status(200).json({
       message:
         "We apologize for the delay. Your replacement is in transit and should reach you within 24 hours. If not received, refund will be initiated automatically.",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
     });
   }
 
@@ -2302,6 +2382,10 @@ app.post("/api/replacement_queries", (req, res) => {
     if (confirm === "yes_cancel_replacement") {
       return res.status(200).json({
         message: `Your replacement request for order ${orderId} has been cancelled successfully. Any refund (if applicable) will be credited within 5–7 business days.`,
+        options: [
+          { id: "end_conversation", name: "Okay, got it" },
+          { id: "main_menu", name: "Go back to main menu" },
+        ],
       });
     }
 
@@ -2309,356 +2393,23 @@ app.post("/api/replacement_queries", (req, res) => {
       return res.status(200).json({
         message:
           "No worries! Your replacement request remains active. You’ll be notified once it’s dispatched.",
+        options: [
+          { id: "end_conversation", name: "Okay, got it" },
+          { id: "main_menu", name: "Go back to main menu" },
+        ],
       });
     }
   }
 
   // Fallback
-  return res
-    .status(400)
-    .json({ message: "Invalid current_step or missing parameters." });
+  return res.status(400).json({
+    message: "Invalid current_step or missing parameters.",
+    options: [
+      { id: "end_conversation", name: "Okay, got it" },
+      { id: "main_menu", name: "Go back to main menu" },
+    ],
+  });
 });
-
-// app.post("/api/wrong_item", (req, res) => {
-//   const { current_step, orderId, selected_item } = req.body;
-
-//   // Step 1: Show delivered orders
-//   if (current_step === "show_delivered_orders") {
-//     return res.status(200).json({
-//       message: "Select the order with wrong item:",
-//       options: [
-//         {
-//           id: "OD1234",
-//           name: "OD1234 - Sunflower Oil, Bread",
-//           category: "wrong_item",
-//           next_step: "show_items",
-//         },
-//         {
-//           id: "OD1235",
-//           name: "OD1235 - Eggs, Milk",
-//           category: "wrong_item",
-//           next_step: "show_items",
-//         },
-//       ],
-//     });
-//   }
-
-//   // Step 2: Show items for selected order
-//   else if (current_step === "show_items") {
-//     if (orderId === "OD1234") {
-//       return res.status(200).json({
-//         message: "Which item was wrong?",
-//         options: [
-//           {
-//             id: "oil",
-//             name: "Sunflower Oil",
-//             category: "wrong_item",
-//             next_step: "specify_wrong_item",
-//           },
-//           {
-//             id: "bread",
-//             name: "Bread",
-//             category: "wrong_item",
-//             next_step: "specify_wrong_item",
-//           },
-//         ],
-//       });
-//     } else {
-//       return res.status(200).json({
-//         message: "Which item was wrong?",
-//         options: [
-//           {
-//             id: "eggs",
-//             name: "Eggs",
-//             category: "wrong_item",
-//             next_step: "specify_wrong_item",
-//           },
-//           {
-//             id: "milk",
-//             name: "Milk",
-//             category: "wrong_item",
-//             next_step: "specify_wrong_item",
-//           },
-//         ],
-//       });
-//     }
-//   }
-
-//   // Step 3: Specify wrong item details
-//   else if (current_step === "specify_wrong_item") {
-//     return res.status(200).json({
-//       message: "What did you receive instead?",
-//       options: [
-//         {
-//           id: "enter_details",
-//           name: "Type wrong item name",
-//           category: "wrong_item",
-//           next_step: "choose_resolution",
-//         },
-//       ],
-//     });
-//   }
-
-//   // Step 4: Choose resolution
-//   else if (current_step === "choose_resolution") {
-//     return res.status(200).json({
-//       message: "How would you like us to fix this?",
-//       options: [
-//         {
-//           id: "instant_refund",
-//           name: "Instant Refund ₹12.99 + ₹5 bonus",
-//           description: "Get refund now with bonus credit",
-//           category: "wrong_item",
-//           next_step: "refund_processing",
-//         },
-//         {
-//           id: "replacement",
-//           name: "Free Replacement + ₹50 credit",
-//           description: "Get correct item delivered today",
-//           category: "wrong_item",
-//           next_step: "replacement_processing",
-//         },
-//         {
-//           id: "credit_plus",
-//           name: "₹14.29 Store Credit (10% extra)",
-//           description: "Extra credit for next order",
-//           category: "wrong_item",
-//           next_step: "credit_processing",
-//         },
-//       ],
-//     });
-//   }
-
-//   // Step 5A: Refund processing
-//   else if (current_step === "refund_processing") {
-//     return res.status(200).json({
-//       message: "Upload photo (optional):",
-//       options: [
-//         {
-//           id: "upload_photo",
-//           name: "Upload Photo",
-//           category: "wrong_item",
-//           next_step: "refund_complete",
-//         },
-//         {
-//           id: "skip_photo",
-//           name: "Skip and proceed",
-//           category: "wrong_item",
-//           next_step: "refund_complete",
-//         },
-//       ],
-//     });
-//   }
-
-//   // Step 6A: Refund complete
-//   else if (current_step === "refund_complete") {
-//     return res.status(200).json({
-//       message:
-//         "✅ Refund approved! ₹17.99 credited to your wallet. Use it for your next order.",
-//       case_id: "CASE-12345",
-//       resolution: {
-//         refund_amount: 12.99,
-//         bonus_credit: 5.0,
-//         total: 17.99,
-//         processing_time: "Immediate",
-//       },
-//       options: [
-//         {
-//           id: "track_status",
-//           name: "Track Resolution",
-//           category: "navigation",
-//           next_step: "track_status",
-//         },
-//         {
-//           id: "contact_support",
-//           name: "Contact Support",
-//           category: "support",
-//           next_step: "contact_support",
-//         },
-//       ],
-//     });
-//   }
-
-//   // Step 5B: Replacement processing
-//   else if (current_step === "replacement_processing") {
-//     return res.status(200).json({
-//       message: "Replacement scheduled! What about the wrong item?",
-//       options: [
-//         {
-//           id: "pickup",
-//           name: "Pickup with delivery",
-//           description: "We'll collect wrong item when delivering replacement",
-//           category: "wrong_item",
-//           next_step: "replacement_complete",
-//         },
-//         {
-//           id: "keep",
-//           name: "Keep wrong item",
-//           description: "No need to return it",
-//           category: "wrong_item",
-//           next_step: "replacement_complete",
-//         },
-//       ],
-//     });
-//   }
-
-//   // Step 6B: Replacement complete
-//   else if (current_step === "replacement_complete") {
-//     return res.status(200).json({
-//       message:
-//         "✅ Replacement confirmed! Correct item will arrive in 2-4 hours. ₹50 credit added for inconvenience.",
-//       case_id: "CASE-12346",
-//       delivery_eta: "2-4 hours",
-//       compensation: "₹50 wallet credit",
-//       options: [
-//         {
-//           id: "track_delivery",
-//           name: "Track Delivery",
-//           category: "navigation",
-//           next_step: "track_delivery",
-//         },
-//       ],
-//     });
-//   }
-
-//   // Step 5C: Credit processing
-//   else if (current_step === "credit_processing") {
-//     return res.status(200).json({
-//       message: "Credit processing:",
-//       options: [
-//         {
-//           id: "process_credit",
-//           name: "Confirm Credit",
-//           category: "wrong_item",
-//           next_step: "credit_complete",
-//         },
-//       ],
-//     });
-//   }
-
-//   // Step 6C: Credit complete
-//   else if (current_step === "credit_complete") {
-//     return res.status(200).json({
-//       message:
-//         "✅ ₹14.29 credit added to your account! 10% bonus for the inconvenience.",
-//       case_id: "CASE-12347",
-//       credit_amount: 14.29,
-//       options: [
-//         {
-//           id: "shop_now",
-//           name: "Shop Now with Credit",
-//           category: "navigation",
-//           next_step: "shop_now",
-//         },
-//       ],
-//     });
-//   }
-
-//   // Step 7: Track status
-//   else if (current_step === "track_status") {
-//     return res.status(200).json({
-//       message: "Resolution Status: COMPLETED",
-//       status_updates: [
-//         "Request received - 2:30 PM",
-//         "Approved automatically - 2:31 PM",
-//         "₹17.99 credited to wallet - 2:31 PM",
-//       ],
-//       options: [
-//         {
-//           id: "back_home",
-//           name: "Back to Home",
-//           category: "navigation",
-//           next_step: "home",
-//         },
-//       ],
-//     });
-//   }
-
-//   // Step 8: Contact support
-//   else if (current_step === "contact_support") {
-//     return res.status(200).json({
-//       message: "Contact support:",
-//       options: [
-//         {
-//           id: "live_chat",
-//           name: "Live Chat (2 min wait)",
-//           category: "support",
-//           next_step: "chat_started",
-//         },
-//         {
-//           id: "callback",
-//           name: "Request Callback",
-//           category: "support",
-//           next_step: "callback_scheduled",
-//         },
-//         {
-//           id: "phone",
-//           name: "Call +1-800-HELP-NOW",
-//           category: "support",
-//           next_step: "phone_call",
-//         },
-//       ],
-//     });
-//   }
-
-//   // Step 9: Support responses
-//   else if (current_step === "chat_started") {
-//     return res.status(200).json({
-//       message:
-//         "Connected to support agent: Hi! I'm here to help with your wrong item issue.",
-//       options: [
-//         {
-//           id: "type_message",
-//           name: "Type your message...",
-//           category: "support",
-//           next_step: "chat_continue",
-//         },
-//       ],
-//     });
-//   } else if (current_step === "callback_scheduled") {
-//     return res.status(200).json({
-//       message:
-//         "✅ Callback scheduled! We'll call you within 15 minutes at your registered number.",
-//       options: [
-//         {
-//           id: "back_home",
-//           name: "Back to Home",
-//           category: "navigation",
-//           next_step: "home",
-//         },
-//       ],
-//     });
-//   }
-
-//   // Default
-//   else {
-//     return res.status(200).json({
-//       message: "Let's resolve your wrong item issue:",
-//       options: [
-//         {
-//           id: "start_here",
-//           name: "Report Wrong Item",
-//           category: "wrong_item",
-//           next_step: "show_delivered_orders",
-//         },
-//       ],
-//     });
-//   }
-// });
-
-// app.get("/api/resolution-status/:caseId", (req, res) => {
-//   const { caseId } = req.params;
-
-//   // Mock status response
-//   res.json({
-//     case_id: caseId,
-//     status: "completed",
-//     resolution_type: "refund",
-//     amount: 12.99,
-//     processed_at: new Date().toISOString(),
-//     customer_satisfaction: "high",
-//   });
-// });
 
 app.listen(PORT, () => {
   console.log(`server listening on http://localhost:${PORT}`);
