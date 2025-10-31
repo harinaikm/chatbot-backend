@@ -1017,6 +1017,16 @@ We’re expecting it to be dispatched soon.`,
     return res.status(200).json({
       message:
         "Thanks for your patience 🙏. Your order is on its way — we’ll notify you as soon as it’s about to reach your location.",
+      options: [
+        {
+          id: "end_conversation",
+          name: "Okay, got it",
+        },
+        {
+          id: "main_menu",
+          name: "Go back to main menu",
+        },
+      ],
     });
   }
 
@@ -2204,16 +2214,13 @@ app.post("/api/replacement_queries", (req, res) => {
       }" 🚚. Expected delivery by ${order.expected_delivery || "TBD"}.`,
       options: [
         {
-          id: "reschedule_pickup",
-          name: "Reschedule pickup",
-          next_step: "reschedule_pickup",
+          id: "cancel_replacement",
+          name: "Cancel replacement",
           category: "replacement_queries",
         },
         {
-          id: "cancel_replacement",
-          name: "Cancel replacement",
-          // next_step: "cancel_replacement",
-          category: "replacement_queries",
+          id: "main_menu",
+          name: "Go back to main menu",
         },
       ],
     });
