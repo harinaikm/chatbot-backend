@@ -1727,7 +1727,7 @@ app.post("/api/issue_with_quantity", (req, res) => {
     // }
 
     return res.status(200).json({
-      message: `You selected Order ID ${selectedOrder.id}.\n\nPlease select the item that has less quantity:`,
+      message: `You selected Order ID ${selectedOrder.id}.\nPlease select the item that has less quantity:`,
       options: selectedOrder.items.map((item) => ({
         name: item,
         id: item,
@@ -1747,7 +1747,7 @@ app.post("/api/issue_with_quantity", (req, res) => {
     // }
 
     return res.status(200).json({
-      message: `You selected "${item_with_issue}".\n\nPlease enter the quantity you actually received?`,
+      message: `You selected "${item_with_issue}".\nPlease enter the quantity you actually received?`,
       options: [
         {
           id: "enter_quantity",
