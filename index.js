@@ -1396,7 +1396,8 @@ app.post("/api/wrong_item", (req, res) => {
       id: `#${item}${index}`,
       name: item,
       category: "wrong_item",
-      next_step: "confirm_wrong_item",
+      // next_step: "confirm_wrong_item",
+      next_step: "upload_image",
     }));
 
     return res.status(200).json({
@@ -1458,13 +1459,31 @@ app.post("/api/wrong_item", (req, res) => {
           id: "refund",
           name: "Refund (Get money back)",
           category: "wrong_item",
-          next_step: "refund_submitted",
+          next_step: "refund_mode_selection",
         },
         {
           id: "replacement",
           name: "Replacement (Get correct item delivered)",
           category: "wrong_item",
           next_step: "replacement_submitted",
+        },
+      ],
+    });
+  } else if (current_step === "refund_mode_selection") {
+    return res.status(200).json({
+      message: "Where would you like the refund to be credited?",
+      options: [
+        {
+          id: "refund_wallet",
+          name: "Credit to Wallet",
+          next_step: "refund_submitted",
+          category: "wrong_item",
+        },
+        {
+          id: "refund_bank",
+          name: "Credit to Original Payment Method",
+          next_step: "refund_submitted",
+          category: "wrong_item",
         },
       ],
     });
