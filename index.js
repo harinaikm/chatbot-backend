@@ -724,7 +724,7 @@ app.post("/api/modifying_order", (req, res) => {
 
 app.post("/api/reschedule_order", (req, res) => {
   const { current_step, orderId, selected_slot } = req.body;
-  console.log(current_step);
+  console.log("reschedule_order", current_step);
 
   // Mock active orders
   const activeOrders = [
@@ -903,9 +903,8 @@ app.post("/api/order_delayed", (req, res) => {
     }
 
     return res.status(200).json({
-      message: `Your order #${order.id} is currently *${order.status}*.  
-Expected delivery in approximately ${order.eta}.`,
-      note: `Reason for delay: ${order.delay_reason}.`,
+      message: `We're sorry for the delay 🙏. Order delayed due to ${order.delay_reason}.`,
+
       options: [
         {
           id: "track_live",
@@ -913,16 +912,11 @@ Expected delivery in approximately ${order.eta}.`,
           next_step: "track_live_status",
           category: "order_delayed",
         },
+
         {
           id: "contact_support",
-          name: "Talk to support agent",
+          name: "Connect with Delivery Partner",
           next_step: "connect_support",
-          category: "order_delayed",
-        },
-        {
-          id: "cancel_order",
-          name: "Cancel my order",
-          next_step: "confirm_cancel_due_to_delay",
           category: "order_delayed",
         },
       ],
@@ -933,7 +927,7 @@ Expected delivery in approximately ${order.eta}.`,
   else if (current_step === "track_live_status") {
     if (order.status === "Out for Delivery") {
       return res.status(200).json({
-        message: `Your order is with ${order.delivery_partner} and will reach you soon 🚴‍♂️.  
+        message: `Your order #${order.id} is currently *${order.status}* 🚚..  
 There’s a slight delay due to ${order.delay_reason}. ETA: ${order.eta}`,
         options: [
           {
@@ -943,9 +937,8 @@ There’s a slight delay due to ${order.delay_reason}. ETA: ${order.eta}`,
             category: "order_delayed",
           },
           {
-            id: "cancel_order",
-            name: "Cancel my order",
-            next_step: "confirm_cancel_due_to_delay",
+            id: "main_menu",
+            name: "Go back to main menu",
             category: "order_delayed",
           },
         ],
@@ -963,14 +956,21 @@ We’re expecting it to be dispatched soon.`,
             category: "order_delayed",
           },
           {
-            id: "cancel_order",
-            name: "Cancel my order",
-            next_step: "confirm_cancel_due_to_delay",
+            id: "main_menu",
+            name: "Go back to main menu",
             category: "order_delayed",
           },
         ],
       });
     }
+  } else if (current_step === "show_delay_reason") {
+    return res.status(200).json({
+      message: `We're sorry for the delay 🙏. Order delayed due to ${order.delay_reason}.`,
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
+      ],
+    });
   }
 
   // 3️⃣ Step — Customer Chooses to Cancel Due to Delay
@@ -1047,163 +1047,163 @@ We’re expecting it to be dispatched soon.`,
   }
 });
 
-app.post("/api/order_delayed", (req, res) => {
-  const { current_step, orderId, user_choice } = req.body;
+// app.post("/api/order_delayed", (req, res) => {
+//   const { current_step, orderId, user_choice } = req.body;
 
-  // Mock orders
-  const orders = [
-    {
-      id: "OD1234",
-      items: ["Biscuit Pack", "Soft Drink", "Banana Chips"],
-      expectedTime: "7 AM - 7:30 AM",
-      updatedTime: "7:45 AM - 8:15 AM",
-    },
-    {
-      id: "OD1235",
-      items: ["Milk", "Paneer"],
-      expectedTime: "7 AM - 7:30 AM",
-      updatedTime: "7:45 AM - 8:15 AM",
-    },
-  ];
+//   // Mock orders
+//   const orders = [
+//     {
+//       id: "OD1234",
+//       items: ["Biscuit Pack", "Soft Drink", "Banana Chips"],
+//       expectedTime: "7 AM - 7:30 AM",
+//       updatedTime: "7:45 AM - 8:15 AM",
+//     },
+//     {
+//       id: "OD1235",
+//       items: ["Milk", "Paneer"],
+//       expectedTime: "7 AM - 7:30 AM",
+//       updatedTime: "7:45 AM - 8:15 AM",
+//     },
+//   ];
 
-  // Step 1 → Show delayed or possibly delayed orders
-  if (current_step === "show_delayed_orders") {
-    return res.status(200).json({
-      message:
-        "We’re sorry that your order hasn’t arrived yet. Here are your active orders that might be delayed:",
-      options: orders.map((order) => ({
-        title: `Order ID: ${order.id} — ${order.items.join(", ")} (Expected: ${
-          order.expectedTime
-        })`,
-        value: order.id,
-      })),
-      next_step: "select_delayed_order",
-    });
-  }
+//   // Step 1 → Show delayed or possibly delayed orders
+//   if (current_step === "show_delayed_orders") {
+//     return res.status(200).json({
+//       message:
+//         "We’re sorry that your order hasn’t arrived yet. Here are your active orders that might be delayed:",
+//       options: orders.map((order) => ({
+//         title: `Order ID: ${order.id} — ${order.items.join(", ")} (Expected: ${
+//           order.expectedTime
+//         })`,
+//         value: order.id,
+//       })),
+//       next_step: "select_delayed_order",
+//     });
+//   }
 
-  // Step 2 → Select which order is delayed
-  if (current_step === "select_delayed_order") {
-    const selectedOrder = orders.find((o) => o.id === orderId);
-    if (!selectedOrder) {
-      return res.status(404).json({
-        message:
-          "Sorry, I couldn’t find that order. Please select a valid one.",
-        next_step: "show_delayed_orders",
-      });
-    }
+//   // Step 2 → Select which order is delayed
+//   if (current_step === "select_delayed_order") {
+//     const selectedOrder = orders.find((o) => o.id === orderId);
+//     if (!selectedOrder) {
+//       return res.status(404).json({
+//         message:
+//           "Sorry, I couldn’t find that order. Please select a valid one.",
+//         next_step: "show_delayed_orders",
+//       });
+//     }
 
-    return res.status(200).json({
-      message: `Your order (ID: ${selectedOrder.id}) was expected between ${selectedOrder.expectedTime}.\n\nWe’re noticing a delay due to high traffic or weather conditions.`,
-      options: [
-        {
-          name: "Check updated delivery time",
-          id: "check_updated_time",
-          next_step: "choose_delay_action",
-          category: "order_delayed",
-        },
-        {
-          name: "Report as not delivered",
-          id: "report_not_delivered",
-          next_step: "choose_delay_action",
-          category: "order_delayed",
-        },
-      ],
-    });
-  }
+//     return res.status(200).json({
+//       message: `Your order (ID: ${selectedOrder.id}) was expected between ${selectedOrder.expectedTime}.\n\nWe’re noticing a delay due to high traffic or weather conditions.`,
+//       options: [
+//         {
+//           name: "Check updated delivery time",
+//           id: "check_updated_time",
+//           next_step: "choose_delay_action",
+//           category: "order_delayed",
+//         },
+//         {
+//           name: "Report as not delivered",
+//           id: "report_not_delivered",
+//           next_step: "choose_delay_action",
+//           category: "order_delayed",
+//         },
+//       ],
+//     });
+//   }
 
-  // Step 3 → User chooses what to do next
-  if (current_step === "choose_delay_action") {
-    if (user_choice === "check_updated_time") {
-      const selectedOrder = orders.find((o) => o.id === orderId);
-      return res.status(200).json({
-        message: `The updated estimated delivery time for Order ID ${orderId} is ${selectedOrder.updatedTime}.\n\nOur delivery partner is on the way.`,
-        options: [
-          {
-            name: "Okay, I’ll wait",
-            id: "wait_for_order",
-            next_step: "confirm_next_action",
-            category: "order_delayed",
-          },
-          {
-            name: "Report issue if not delivered",
-            id: "report_not_delivered",
-            next_step: "confirm_next_action",
-            category: "order_delayed",
-          },
-        ],
-      });
-    }
+//   // Step 3 → User chooses what to do next
+//   if (current_step === "choose_delay_action") {
+//     if (user_choice === "check_updated_time") {
+//       const selectedOrder = orders.find((o) => o.id === orderId);
+//       return res.status(200).json({
+//         message: `The updated estimated delivery time for Order ID ${orderId} is ${selectedOrder.updatedTime}.\n\nOur delivery partner is on the way.`,
+//         options: [
+//           {
+//             name: "Okay, I’ll wait",
+//             id: "wait_for_order",
+//             next_step: "confirm_next_action",
+//             category: "order_delayed",
+//           },
+//           {
+//             name: "Report issue if not delivered",
+//             id: "report_not_delivered",
+//             next_step: "confirm_next_action",
+//             category: "order_delayed",
+//           },
+//         ],
+//       });
+//     }
 
-    if (user_choice === "report_not_delivered") {
-      return res.status(200).json({
-        message:
-          "We’ve raised this issue with our support team. You’ll be notified soon.\n\nWould you like to request a call back from customer support?",
-        options: [
-          {
-            name: "📞 Yes, request call back",
-            id: "request_callback",
-            next_step: "handle_callback_request",
-            category: "order_delayed",
-          },
-          {
-            name: "❌ No, I’ll wait for update",
-            id: "no_callback",
-            next_step: "handle_callback_request",
-            category: "order_delayed",
-          },
-        ],
-      });
-    }
-  }
+//     if (user_choice === "report_not_delivered") {
+//       return res.status(200).json({
+//         message:
+//           "We’ve raised this issue with our support team. You’ll be notified soon.\n\nWould you like to request a call back from customer support?",
+//         options: [
+//           {
+//             name: "📞 Yes, request call back",
+//             id: "request_callback",
+//             next_step: "handle_callback_request",
+//             category: "order_delayed",
+//           },
+//           {
+//             name: "❌ No, I’ll wait for update",
+//             id: "no_callback",
+//             next_step: "handle_callback_request",
+//             category: "order_delayed",
+//           },
+//         ],
+//       });
+//     }
+//   }
 
-  // Step 4 → Confirm next action
-  if (current_step === "confirm_next_action") {
-    const selectedOrder = orders.find((o) => o.id === orderId);
-    if (user_choice === "wait_for_order") {
-      return res.status(200).json({
-        message: `Thank you for your patience! Your delivery partner will reach soon.\n\nIf the order isn’t delivered by ${
-          selectedOrder.updatedTime.split("-")[1]
-        } please report again.`,
-        // options: [
-        //   { name: "🏠 Go to main menu", id: "main_menu" },
-        //   { title: "📦 Track my order", value: "track_order" },
-        // ],
-      });
-    }
+//   // Step 4 → Confirm next action
+//   if (current_step === "confirm_next_action") {
+//     const selectedOrder = orders.find((o) => o.id === orderId);
+//     if (user_choice === "wait_for_order") {
+//       return res.status(200).json({
+//         message: `Thank you for your patience! Your delivery partner will reach soon.\n\nIf the order isn’t delivered by ${
+//           selectedOrder.updatedTime.split("-")[1]
+//         } please report again.`,
+//         // options: [
+//         //   { name: "🏠 Go to main menu", id: "main_menu" },
+//         //   { title: "📦 Track my order", value: "track_order" },
+//         // ],
+//       });
+//     }
 
-    if (user_choice === "report_not_delivered") {
-      return res.status(200).json({
-        message:
-          "We’ve notified our support team about your delayed order. You’ll get an update shortly.",
-        options: [
-          { name: "🏠 Back to main menu", id: "main_menu" },
-          { name: "📞 Contact  support", id: "contact_support" },
-        ],
-      });
-    }
-  }
+//     if (user_choice === "report_not_delivered") {
+//       return res.status(200).json({
+//         message:
+//           "We’ve notified our support team about your delayed order. You’ll get an update shortly.",
+//         options: [
+//           { name: "🏠 Back to main menu", id: "main_menu" },
+//           { name: "📞 Contact  support", id: "contact_support" },
+//         ],
+//       });
+//     }
+//   }
 
-  // Step 5 → Handle callback request
-  if (current_step === "handle_callback_request") {
-    if (user_choice === "request_callback") {
-      return res.status(200).json({
-        message:
-          "✅ Your callback request has been placed. Our customer care executive will contact you soon.",
-      });
-    } else {
-      return res.status(200).json({
-        message:
-          "Alright! Please wait while we look into your delayed order. You’ll get a notification once it’s out for delivery.",
-      });
-    }
-  }
+//   // Step 5 → Handle callback request
+//   if (current_step === "handle_callback_request") {
+//     if (user_choice === "request_callback") {
+//       return res.status(200).json({
+//         message:
+//           "✅ Your callback request has been placed. Our customer care executive will contact you soon.",
+//       });
+//     } else {
+//       return res.status(200).json({
+//         message:
+//           "Alright! Please wait while we look into your delayed order. You’ll get a notification once it’s out for delivery.",
+//       });
+//     }
+//   }
 
-  // Default fallback
-  return res.status(400).json({
-    message: "Invalid step. Please restart the order delay process.",
-    next_step: "show_delayed_orders",
-  });
-});
+//   // Default fallback
+//   return res.status(400).json({
+//     message: "Invalid step. Please restart the order delay process.",
+//     next_step: "show_delayed_orders",
+//   });
+// });
 
 app.get("/api/issue_with_products", (req, res) => {
   return res.status(200).json({
@@ -1306,7 +1306,7 @@ app.post("/api/damaged_item", (req, res) => {
           id: "refund",
           name: "Refund (Get money back)",
           category: "damaged_item",
-          next_step: "refund_submitted",
+          next_step: "refund_mode_selection",
         },
         {
           id: "replacement",
@@ -1316,7 +1316,26 @@ app.post("/api/damaged_item", (req, res) => {
         },
       ],
     });
-  } // Step 6A: Refund submission confirmation
+  } else if (current_step === "refund_mode_selection") {
+    return res.status(200).json({
+      message: "Where would you like the refund to be credited?",
+      options: [
+        {
+          id: "refund_wallet",
+          name: "Credit to Wallet",
+          next_step: "refund_submitted",
+          category: "wrong_item",
+        },
+        {
+          id: "refund_bank",
+          name: "Credit to Original Payment Method",
+          next_step: "refund_submitted",
+          category: "wrong_item",
+        },
+      ],
+    });
+  }
+  // Step 6A: Refund submission confirmation
   else if (current_step === "refund_submitted") {
     return res.status(200).json({
       message:
@@ -1899,16 +1918,12 @@ app.post("/api/issue_with_delivery_partner", (req, res) => {
       id: "rude_behavior",
       title: "Delivery partner was rude or unprofessional",
     },
-    { id: "late_delivery", title: "Delivery partner delivered very late" },
-    {
-      id: "asked_extra_money",
-      title: "Delivery partner asked for extra money",
-    },
+
     {
       id: "did_not_follow_instructions",
       title: "Did not follow delivery instructions",
     },
-    { id: "other_issue", title: "Something else" },
+    { id: "other_issue", title: "Other issue" },
   ];
 
   // Step 1 → Show delivered orders
@@ -1941,7 +1956,7 @@ app.post("/api/issue_with_delivery_partner", (req, res) => {
       options: issues.map((issue) => ({
         name: issue.title,
         id: issue.id,
-        next_step: "select_issue",
+        next_step: "confirm_report",
         category: "issue_with_delivery_partner",
       })),
     });
@@ -1966,7 +1981,7 @@ app.post("/api/issue_with_delivery_partner", (req, res) => {
         message:
           "Please describe briefly what issue you faced with the delivery partner:",
         input: true, // 👈 indicates front-end should show a text input box
-        next_step: "collect_description",
+        next_step: "confirm_report",
       });
     }
 
