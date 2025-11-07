@@ -289,27 +289,49 @@ app.get("/api/returned_orders/:query", (req, res) => {
         "Your return for Order OD1234 (Item: Milk 1L) is confirmed. A pickup agent is being scheduled shortly. We’ll update you once we’ve collected the item.",
       options: [
         {
-          id: "refund_status",
-          name: "Check refund status",
-          category: "returned_orders",
+          id: "end_conversation",
+          name: "Okay, got it",
+        },
+        {
+          id: "main_menu",
+          name: "Go back to main menu",
         },
       ],
     });
   }
 
-  if (query === "pickup_issue") {
+  // if (query === "pickup_issue") {
+  //   return res.status(200).json({
+  //     message: "Please select the issue you’re facing with pickup.",
+  //     options: [
+  //       {
+  //         id: "pickup_not_done",
+  //         name: "Pickup person didn’t come",
+  //         category: "returned_orders",
+  //       },
+  //       {
+  //         id: "reschedule_pickup",
+  //         name: "Reschedule pickup",
+  //         category: "returned_orders",
+  //       },
+  //     ],
+  //   });
+  // }
+
+  if (query === "pickup_not_done") {
     return res.status(200).json({
-      message: "Please select the issue you’re facing with pickup.",
+      message:
+        "Sorry your pickup didn’t happen. Our agent will try again soon. If you’d like to change the time or need help, please contact support.",
       options: [
         {
-          id: "pickup_not_done",
-          name: "Pickup person didn’t come",
-          category: "returned_orders",
+          id: "contact_support",
+          name: "Talk to a support agent",
+          next_step: "connect_support",
+          category: "replacement_queries",
         },
         {
-          id: "reschedule_pickup",
-          name: "Reschedule pickup",
-          category: "returned_orders",
+          id: "main_menu",
+          name: "Go back to main menu",
         },
       ],
     });
@@ -2326,31 +2348,17 @@ app.post("/api/replacement_queries", (req, res) => {
   if (current_step === "pickup_not_done") {
     return res.status(200).json({
       message:
-        "We’re sorry your pickup hasn’t been done yet. You can reschedule your pickup to a convenient slot:",
+        "Sorry your pickup didn’t happen. Our agent will try again soon. If you’d like to change the time or need help, please contact support.",
       options: [
         {
-          id: "slot1",
-          name: "9 AM - 11 AM",
-          next_step: "reschedule_pickup_slot",
+          id: "contact_support",
+          name: "Talk to a support agent",
+          next_step: "connect_support",
           category: "replacement_queries",
         },
         {
-          id: "slot2",
-          name: "12 PM - 2 PM",
-          next_step: "reschedule_pickup_slot",
-          category: "replacement_queries",
-        },
-        {
-          id: "slot3",
-          name: "4 PM - 6 PM",
-          next_step: "reschedule_pickup_slot",
-          category: "replacement_queries",
-        },
-        {
-          id: "customized_time_slot",
-          name: "Customized time slot",
-          next_step: "reschedule_pickup_slot",
-          category: "replacement_queries",
+          id: "main_menu",
+          name: "Go back to main menu",
         },
       ],
     });
