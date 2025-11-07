@@ -286,7 +286,7 @@ app.get("/api/returned_orders/:query", (req, res) => {
   if (query === "return_status") {
     return res.status(200).json({
       message:
-        "Your return for Order OD1234 (Item: Milk 1L) is currently *In Transit*. The pickup was done on 23 Oct and it’s expected to reach our warehouse by 25 Oct.",
+        "Your return for Order OD1234 (Item: Milk 1L) is confirmed. A pickup agent is being scheduled shortly. We’ll update you once we’ve collected the item.",
       options: [
         {
           id: "refund_status",
@@ -341,12 +341,12 @@ app.get("/api/returned_orders/:query", (req, res) => {
       options: [
         {
           id: "confirm_cancel",
-          name: "Yes, cancel my return",
+          name: "✅ Yes, cancel my return",
           category: "returned_orders",
         },
         {
           id: "no_cancel",
-          name: "No, keep it as is",
+          name: "🚚 No, keep my return active",
           category: "returned_orders",
         },
       ],
@@ -648,14 +648,18 @@ app.post("/api/modifying_order", (req, res) => {
       next_step: "increase-quantity_of_existing_item_confirmation",
     }));
     res.status(200).json({
-      message: "Please select the item you want to increase the quantity of:",
+      message:
+        "Select the item you want to change and type how many you want now 👇",
       options,
     });
   } else if (
     current_step === "increase-quantity_of_existing_item_confirmation"
   ) {
     res.status(200).json({
-      message: `✅ Quantity of "${selectedItem}" has been updated to ${quantity}.`,
+      message: `✅ Got it! We've changed "${selectedItem}" to ${quantity} ${
+        quantity > 1 ? "packs" : "pack"
+      }. Your order will update soon.`,
+
       options: [
         {
           id: "end_conversation",
@@ -1569,6 +1573,8 @@ app.post("/api/missing_item", (req, res) => {
     confirm_report,
   } = req.body;
 
+  console.log("missing_items", missing_items);
+
   // Mock delivered orders
   const deliveredOrders = [
     {
@@ -1608,7 +1614,7 @@ app.post("/api/missing_item", (req, res) => {
     // }
 
     return res.status(200).json({
-      message: `You selected Order ID ${selectedOrder.id}.\n\nPlease select the missing item:`,
+      message: `You selected Order ID ${selectedOrder.id}.\n\nPlease select the missing item(s):`,
       options: selectedOrder.items.map((item) => ({
         id: item,
         name: item,
@@ -1616,6 +1622,9 @@ app.post("/api/missing_item", (req, res) => {
         category: "missing_item",
         next_step: "select_missing_items",
       })),
+      multi_select: true,
+      category: "missing_item",
+      next_step: "select_missing_items",
     });
   }
 
@@ -1629,22 +1638,53 @@ app.post("/api/missing_item", (req, res) => {
     // }
 
     return res.status(200).json({
-      message: `You reported that the following item is missing: ${missing_items.join(
+      message: `You reported that the following item(s) is missing: "${missing_items.join(
         ", "
-      )}.\n\nHow would you like us to resolve this?`,
+      )}".\n\nHow would you like us to resolve this?`,
       options: [
         {
           name: "💰 Refund for missing item",
           id: "refund",
-          next_step: "select_resolution",
+          next_step: "refund_mode_selection",
           category: "missing_item",
         },
         {
           name: "📦 Replacement for missing item",
           id: "replacement",
-          next_step: "select_resolution",
+          next_step: "replacement_submitted",
           category: "missing_item",
         },
+      ],
+    });
+  }
+
+  if (current_step === "refund_mode_selection") {
+    return res.status(200).json({
+      message: "Where would you like the refund to be credited?",
+      options: [
+        {
+          id: "refund_wallet",
+          name: "Credit to Wallet",
+          next_step: "refund_submitted",
+          category: "wrong_item",
+        },
+        {
+          id: "refund_bank",
+          name: "Credit to Original Payment Method",
+          next_step: "refund_submitted",
+          category: "wrong_item",
+        },
+      ],
+    });
+  }
+
+  if (current_step === "replacement_submitted") {
+    return res.status(200).json({
+      message:
+        "Replacement request submitted. The missing item(s) will be dispatched within 2 hours.",
+      options: [
+        { id: "end_conversation", name: "Okay, got it" },
+        { id: "main_menu", name: "Go back to main menu" },
       ],
     });
   }
@@ -2229,8 +2269,8 @@ app.post("/api/replacement_queries", (req, res) => {
       options: [
         { id: "track_status", name: "Track replacement status" },
         { id: "delay_in_replacement", name: "Replacement delayed" },
-        { id: "pickup_not_done", name: "Pickup not done yet" },
-        { id: "reschedule_pickup", name: "Reschedule pickup" },
+        // { id: "pickup_not_done", name: "Pickup not done yet" },
+        // { id: "reschedule_pickup", name: "Reschedule pickup" },
         { id: "not_received", name: "Didn’t receive replacement item" },
         { id: "cancel_replacement", name: "Cancel replacement request" },
       ],
@@ -2422,7 +2462,7 @@ app.post("/api/replacement_queries", (req, res) => {
   if (current_step === "confirm_cancel_replacement") {
     if (confirm === "yes_cancel_replacement") {
       return res.status(200).json({
-        message: `Your replacement request for order ${orderId} has been cancelled successfully. Any refund (if applicable) will be credited within 5–7 business days.`,
+        message: `Your replacement request for order ${orderId} has been cancelled successfully.`,
         options: [
           { id: "end_conversation", name: "Okay, got it" },
           { id: "main_menu", name: "Go back to main menu" },
