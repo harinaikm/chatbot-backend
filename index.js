@@ -598,7 +598,7 @@ app.post("/api/cancel_order", (req, res) => {
 app.post("/api/modifying_order", (req, res) => {
   const { current_step, orderId, selectedItem, newAddedItem, quantity } =
     req.body;
-  console.log("modifying_order", current_step);
+  // console.log("modifying_order", current_step);
 
   const orders = [
     {
@@ -670,17 +670,14 @@ app.post("/api/modifying_order", (req, res) => {
       next_step: "increase-quantity_of_existing_item_confirmation",
     }));
     res.status(200).json({
-      message:
-        "Select the item you want to change and type how many you want now 👇",
+      message: "Select the item and enter the updated quantity.",
       options,
     });
   } else if (
     current_step === "increase-quantity_of_existing_item_confirmation"
   ) {
     res.status(200).json({
-      message: `✅ Got it! We've changed "${selectedItem}" to ${quantity} ${
-        quantity > 1 ? "packs" : "pack"
-      }. Your order will update soon.`,
+      message: `✅ Got it! The quantity of "${selectedItem}" has been successfully updated to ${quantity}.`,
 
       options: [
         {
