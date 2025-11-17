@@ -473,31 +473,26 @@ app.post("/api/cancel_order", (req, res) => {
           id: "reason_better_price",
           name: "Found a better price elsewhere",
           category: "cancel_order",
-          next_step: "choose_cancel_type",
+          next_step: "show_confirmation",
         },
         {
           id: "reason_wrong_item",
           name: "Added wrong items by mistake",
           category: "cancel_order",
-          next_step: "choose_cancel_type",
+          next_step: "show_confirmation",
         },
-        {
-          id: "reason_delayed",
-          name: "Delivery taking too long",
-          category: "cancel_order",
-          next_step: "choose_cancel_type",
-        },
+
         {
           id: "reason_changed_mind",
           name: "Changed my mind",
           category: "cancel_order",
-          next_step: "choose_cancel_type",
+          next_step: "show_confirmation",
         },
         {
           id: "other_reasons",
           name: "Other reasons",
           category: "cancel_order",
-          next_step: "choose_cancel_type",
+          next_step: "show_confirmation",
         },
       ],
     });
