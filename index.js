@@ -714,11 +714,11 @@ app.post("/api/modifying_order", (req, res) => {
   } else if (current_step === "show_confirmation") {
     return res.status(200).json({
       message:
-        "Just confirming — do you want to remove the selected items from your order?",
+        "Just confirming — do you want to remove the selected item (s) from your order?",
       options: [
         {
           id: "confirm_delete",
-          name: "✅ Yes, remove them",
+          name: "✅ Yes, remove selected item(s) ",
           next_step: "delete_confirmation_done",
           category: "modifying_order",
         },
